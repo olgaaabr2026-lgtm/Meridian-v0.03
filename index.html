@@ -2861,24 +2861,36 @@
                 carouselWrap.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
                 carouselWrap.addEventListener('mouseleave', startAutoPlay);
 
-                // Свайп
+                // Свайп - исправлен для iPhone
                 let touchStartX = 0;
-                let touchEndX = 0;
+                let touchStartY = 0;
+                let touchEndX   = 0;
+                let isSwiping   = false;
 
                 carouselWrap.addEventListener('touchstart', e => {
-                    touchStartX = e.changedTouches[0].screenX;
-                }, {passive: true});
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isSwiping   = false;
+                }, { passive: true });
+
+                carouselWrap.addEventListener('touchmove', e => {
+                    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                    if (dx > dy && dx > 8) {
+                        isSwiping = true;
+                        e.preventDefault();
+                    }
+                }, { passive: false });
 
                 carouselWrap.addEventListener('touchend', e => {
-                    touchEndX = e.changedTouches[0].screenX;
-                    handleSwipe();
-                }, {passive: true});
-
-                const handleSwipe = () => {
-                    if (touchStartX - touchEndX > 50) nextSlide();
-                    if (touchEndX - touchStartX > 50) prevSlide();
-                    resetAutoPlay();
-                };
+                    touchEndX = e.changedTouches[0].clientX;
+                    if (isSwiping) {
+                        if (touchStartX - touchEndX > 30) nextSlide();
+                        if (touchEndX - touchStartX > 30) prevSlide();
+                        resetAutoPlay();
+                    }
+                    isSwiping = false;
+                }, { passive: true });
 
                 startAutoPlay();
             }
